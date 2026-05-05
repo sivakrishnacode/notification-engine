@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WS Test</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+
+<body>
+    <h1>Notification WS Test</h1>
+    <div id="status">Status: Disconnected</div>
+    <ul id="messages"></ul>
+
+    <script>
+        const userId = prompt("Enter User ID to listen for:", "user-123");
+        const socket = io('http://localhost:3000/notifications', {
+            query: { userId }
+        });
+
+        const status = document.getElementById('status');
+        const messages = document.getElementById('messages');
+
+        socket.on('connect', () => {
+            status.innerText = `Status: Connected as ${userId}`;
+            status.style.color = 'green';
+        });
+
+        socket.on('notification', (data) => {
+            const li = document.createElement('li');
+            li.innerText = JSON.stringify(data);
+            messages.appendChild(li);
+        });
+
+        socket.on('disconnect', () => {
+            status.innerText = 'Status: Disconnected';
+            status.style.color = 'red';
+        });
+    </script>
+</body>
+
+</html>
