@@ -7,6 +7,7 @@ export interface AppConfig {
     host: string;
     port: number;
     tls: boolean;
+    password?: string;
   };
   database: {
     url: string;
@@ -48,6 +49,7 @@ export default (): AppConfig => ({
     host: process.env['REDIS_HOST'] ?? 'localhost',
     port: parseInt(process.env['REDIS_PORT'] ?? '6379', 10),
     tls: process.env['REDIS_TLS'] === 'true',
+    password: process.env['REDIS_PASSWORD'],
   },
   database: {
     url: process.env['DATABASE_URL'] ?? '',

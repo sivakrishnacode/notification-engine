@@ -24,6 +24,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
           connection: {
             host: redis.host,
             port: redis.port,
+            password: redis.password,
             ...(redis.tls ? { tls: {} } : {}),
           },
         };

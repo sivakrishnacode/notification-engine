@@ -49,6 +49,7 @@ export class RateLimitService implements OnModuleDestroy {
     this.redis = new Redis({
       host: redisConfig.host,
       port: redisConfig.port,
+      password: redisConfig.password,
       lazyConnect: true,
       ...(redisConfig.tls ? { tls: {} } : {}),
     });
