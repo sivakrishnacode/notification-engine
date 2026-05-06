@@ -4,10 +4,8 @@ export interface AppConfig {
   nodeEnv: string;
   port: number;
   redis: {
-    host: string;
-    port: number;
+    url: string;
     tls: boolean;
-    password?: string;
   };
   database: {
     url: string;
@@ -46,10 +44,8 @@ export default (): AppConfig => ({
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
   port: parseInt(process.env['PORT'] ?? '3000', 10),
   redis: {
-    host: process.env['REDIS_HOST'] ?? 'localhost',
-    port: parseInt(process.env['REDIS_PORT'] ?? '6379', 10),
+    url: process.env['REDIS_URL'] ?? 'redis://localhost:6379',
     tls: process.env['REDIS_TLS'] === 'true',
-    password: process.env['REDIS_PASSWORD'],
   },
   database: {
     url: process.env['DATABASE_URL'] ?? '',

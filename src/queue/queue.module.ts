@@ -2,6 +2,7 @@
 
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import Redis from 'ioredis';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QueueService } from './queue.service';
 import { NotificationProcessor } from './notification.processor';
@@ -19,15 +20,12 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService<AppConfig, true>) => {
-        const redis = configService.get('redis', { infer: true });
-        return {
-          connection: {
-            host: redis.host,
-            port: redis.port,
-            password: redis.password,
-            ...(redis.tls ? { tls: {} } : {}),
-          },
-        };
+        const redisConfig = configService.get('redis', { infer: true });
+        const connection = new Redis(redisConfig.url, {
+          maxRetriesPerRequest: null,
+          ...(redisConfig.tls ? { tls: {} } : {}),
+        });
+        return { connection };
       },
       inject: [ConfigService],
     }),

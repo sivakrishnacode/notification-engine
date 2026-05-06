@@ -46,10 +46,7 @@ export class RateLimitService implements OnModuleDestroy {
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {
     const redisConfig = this.configService.get('redis', { infer: true });
-    this.redis = new Redis({
-      host: redisConfig.host,
-      port: redisConfig.port,
-      password: redisConfig.password,
+    this.redis = new Redis(redisConfig.url, {
       lazyConnect: true,
       ...(redisConfig.tls ? { tls: {} } : {}),
     });
