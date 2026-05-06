@@ -1,5 +1,3 @@
-// src/common/filters/all-exceptions.filter.ts
-
 import {
   ArgumentsHost,
   Catch,
@@ -12,7 +10,6 @@ import { Request, Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -37,10 +34,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
     };
 
-    this.logger.error(
-      `Unhandled exception at ${request.url}: ${status}`,
-      exception instanceof Error ? exception.stack : undefined,
-    );
+    if (status >= 500) {
+      const stack = exception instanceof Error
+        ? exception.stack?.split('\n').slice(0, 3).join('\n')
+        : undefined;
+      this.logger.error(`${request.method} ${request.url} → ${status}`, stack);
+    } else {
+      this.logger.warn(`${request.method} ${request.url} → ${status}`);
+    }
 
     response.status(status).json(errorResponse);
   }
