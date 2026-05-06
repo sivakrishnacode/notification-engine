@@ -26,7 +26,7 @@ export class MetaWhatsappProvider implements ChannelStrategy {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    const waId = job.recipient.waId;
+    const waId = job.recipient?.waId;
     if (!waId) {
       throw new Error(
         `WhatsApp provider: no recipient.waId in job ${job.jobId}`,

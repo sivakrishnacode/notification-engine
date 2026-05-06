@@ -34,7 +34,7 @@ export class EmailProvider implements ChannelStrategy {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    const toAddress = job.recipient.email;
+    const toAddress = job.recipient?.email;
     if (!toAddress) {
       throw new Error(
         `Email provider: no recipient.email in job ${job.jobId}`,
@@ -58,11 +58,11 @@ export class EmailProvider implements ChannelStrategy {
           },
           ...(rendered.htmlBody
             ? {
-                Html: {
-                  Data: rendered.htmlBody,
-                  Charset: 'UTF-8',
-                },
-              }
+              Html: {
+                Data: rendered.htmlBody,
+                Charset: 'UTF-8',
+              },
+            }
             : {}),
         },
       },

@@ -27,7 +27,7 @@ export class PushProvider implements ChannelStrategy {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    const deviceToken = job.recipient.deviceToken;
+    const deviceToken = job.recipient?.deviceToken;
     if (!deviceToken) {
       throw new Error(
         `Push provider: no recipient.deviceToken in job ${job.jobId}`,
