@@ -20,8 +20,10 @@ export const NotificationJobSchema = z.object({
         .regex(/^\+[1-9]\d{1,14}$/, 'Must be E.164 format')
         .optional(),
     })
+    .optional()
     .refine(
       (r) =>
+        !r ||
         r.email !== undefined ||
         r.phone !== undefined ||
         r.deviceToken !== undefined ||
@@ -42,6 +44,15 @@ export const NotificationJobSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
   provider: z.string().optional(),
 })
+  .refine(
+    (data) => {
+      if (data.channel !== 'in_app' && !data.recipient) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'recipient is required for this channel', path: ['recipient'] },
+  )
   .refine(
     (data) => {
       if (data.channel === 'whatsapp' && !data.templateId) {
