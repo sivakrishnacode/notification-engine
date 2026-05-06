@@ -11,6 +11,7 @@ export const configSchema = Joi.object({
   // Redis
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
+  REDIS_TLS: Joi.boolean().default(false),
 
   // PostgreSQL
   DATABASE_URL: Joi.string().required(),
