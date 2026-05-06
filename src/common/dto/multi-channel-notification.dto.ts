@@ -14,21 +14,43 @@ export const MultiChannelNotificationSchema = z.object({
     })
     .optional(),
   data: z.record(z.string(), z.unknown()).optional().default({}),
-  recipient: z.object({
-    email: z.string().email().optional(),
-    phone: z
-      .string()
-      .regex(/^\+[1-9]\d{1,14}$/, 'Must be E.164 format')
-      .optional(),
-    deviceToken: z.string().optional(),
-    waId: z
-      .string()
-      .regex(/^\+[1-9]\d{1,14}$/, 'Must be E.164 format')
-      .optional(),
-  }),
+  recipient: z
+    .object({
+      email: z.string().email().optional(),
+      phone: z
+        .string()
+        .regex(/^\+[1-9]\d{1,14}$/, 'Must be E.164 format')
+        .optional(),
+      deviceToken: z.string().optional(),
+      waId: z
+        .string()
+        .regex(/^\+[1-9]\d{1,14}$/, 'Must be E.164 format')
+        .optional(),
+    })
+    .optional()
+    .refine(
+      (r) =>
+        !r ||
+        r.email !== undefined ||
+        r.phone !== undefined ||
+        r.deviceToken !== undefined ||
+        r.waId !== undefined,
+      { message: 'At least one recipient field must be provided' },
+    ),
   priority: z.number().int().min(0).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
+  .refine(
+    (data) => {
+      // If any channel is NOT in_app, recipient is required
+      const needsRecipient = data.channels.some((c) => c !== 'in_app');
+      if (needsRecipient && !data.recipient) {
+        return false;
+      }
+      return true;
+    },
+    { message: 'recipient is required for these channels', path: ['recipient'] },
+  )
   .refine(
     (data) => {
       if (data.channels.includes('whatsapp') && !data.templateId) {
