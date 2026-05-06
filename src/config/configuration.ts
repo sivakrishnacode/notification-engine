@@ -20,6 +20,10 @@ export interface AppConfig {
     phoneNumberId: string;
     accessToken: string;
   };
+  conceps: {
+    token: string;
+  };
+  whatsappProvider: 'meta' | 'conceps';
   worker: {
     concurrency: number;
   };
@@ -56,6 +60,10 @@ export default (): AppConfig => ({
     phoneNumberId: process.env['META_PHONE_NUMBER_ID'] ?? '',
     accessToken: process.env['META_ACCESS_TOKEN'] ?? '',
   },
+  conceps: {
+    token: process.env['CONCEPS_TOKEN'] ?? '',
+  },
+  whatsappProvider: (process.env['WHATSAPP_PROVIDER'] as any) ?? 'meta',
   worker: {
     concurrency: parseInt(process.env['WORKER_CONCURRENCY'] ?? '5', 10),
   },

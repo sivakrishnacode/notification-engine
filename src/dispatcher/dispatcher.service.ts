@@ -7,8 +7,11 @@ import { RenderedTemplate } from '../templates/templates.service';
 import { EmailProvider } from '../providers/email/email.provider';
 import { SmsProvider } from '../providers/sms/sms.provider';
 import { PushProvider } from '../providers/push/push.provider';
-import { WhatsappProvider } from '../providers/whatsapp/whatsapp.provider';
+import { MetaWhatsappProvider } from '../providers/whatsapp/meta-whatsapp.provider';
+import { ConcepsWhatsappProvider } from '../providers/whatsapp/conceps-whatsapp.provider';
 import { InAppProvider } from '../providers/in-app/in-app.provider';
+import { ConfigService } from '@nestjs/config';
+import { AppConfig } from '../config/configuration';
 
 @Injectable()
 export class DispatcherService {
@@ -19,14 +22,17 @@ export class DispatcherService {
     private readonly emailProvider: EmailProvider,
     private readonly smsProvider: SmsProvider,
     private readonly pushProvider: PushProvider,
-    private readonly whatsappProvider: WhatsappProvider,
+    private readonly metaWhatsappProvider: MetaWhatsappProvider,
+    private readonly concepsWhatsappProvider: ConcepsWhatsappProvider,
     private readonly inAppProvider: InAppProvider,
+    private readonly configService: ConfigService<AppConfig, true>,
   ) {
     this.strategies = new Map<string, ChannelStrategy>([
       ['email', this.emailProvider],
       ['sms', this.smsProvider],
       ['push', this.pushProvider],
-      ['whatsapp', this.whatsappProvider],
+      ['whatsapp_meta', this.metaWhatsappProvider],
+      ['whatsapp_conceps', this.concepsWhatsappProvider],
       ['in_app', this.inAppProvider],
     ]);
   }
@@ -35,14 +41,21 @@ export class DispatcherService {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    const strategy = this.strategies.get(job.channel);
+    let strategyKey: string = job.channel;
 
-    if (!strategy) {
-      this.logger.error(`No strategy found for channel: ${job.channel}`);
-      throw new Error(`Unsupported channel: ${job.channel}`);
+    if (job.channel === 'whatsapp') {
+      const preferredProvider = job.provider || this.configService.get('whatsappProvider', { infer: true });
+      strategyKey = `whatsapp_${preferredProvider}`;
     }
 
-    this.logger.debug(`Routing job ${job.jobId} to provider for channel ${job.channel}`);
+    const strategy = this.strategies.get(strategyKey);
+
+    if (!strategy) {
+      this.logger.error(`No strategy found for key: ${strategyKey} (channel: ${job.channel})`);
+      throw new Error(`Unsupported channel/provider: ${strategyKey}`);
+    }
+
+    this.logger.debug(`Routing job ${job.jobId} to provider ${strategyKey}`);
 
     return strategy.send(job, rendered);
   }

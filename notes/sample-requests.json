@@ -52,9 +52,9 @@
     "channel": "whatsapp",
     "userId": "user-123",
     "recipient": {
-      "waId": "+919876543210"
+      "waId": "+917810002624"
     },
-    "templateId": "payment-whatsapp",
+    "templateId": "check",
     "data": {
       "name": "Siva",
       "amount": "$50.00",
@@ -70,7 +70,10 @@
     "channel": "push",
     "_note": "This example shows the structure for the /notifications/send endpoint",
     "userId": "user-123",
-    "channels": ["push", "in_app"],
+    "channels": [
+      "push",
+      "in_app"
+    ],
     "content": {
       "subject": "System Alert",
       "body": "The system will undergo maintenance in 30 minutes."

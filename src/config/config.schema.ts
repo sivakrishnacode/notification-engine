@@ -23,7 +23,11 @@ export const configSchema = Joi.object({
 
   // Meta / WhatsApp
   META_PHONE_NUMBER_ID: Joi.string().required(),
-  META_ACCESS_TOKEN: Joi.string().required(),
+  META_ACCESS_TOKEN: Joi.string().allow('').optional(),
+
+  // Conceps / WhatsApp
+  CONCEPS_TOKEN: Joi.string().allow('').optional(),
+  WHATSAPP_PROVIDER: Joi.string().valid('meta', 'conceps').default('meta'),
 
   // Worker
   WORKER_CONCURRENCY: Joi.number().integer().min(1).default(5),

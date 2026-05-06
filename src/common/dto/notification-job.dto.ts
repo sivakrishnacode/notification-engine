@@ -40,6 +40,7 @@ export const NotificationJobSchema = z.object({
   priority: z.number().int().min(0).optional(),
   scheduledAt: z.string().datetime().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  provider: z.string().optional(),
 })
   .refine(
     (data) => {

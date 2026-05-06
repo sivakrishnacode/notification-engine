@@ -1,4 +1,4 @@
-// src/providers/whatsapp/whatsapp.provider.ts
+// src/providers/whatsapp/meta-whatsapp.provider.ts
 
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,8 +9,8 @@ import { RenderedTemplate } from '../../templates/templates.service';
 import { AppConfig } from '../../config/configuration';
 
 @Injectable()
-export class WhatsappProvider implements ChannelStrategy {
-  private readonly logger = new Logger(WhatsappProvider.name);
+export class MetaWhatsappProvider implements ChannelStrategy {
+  private readonly logger = new Logger(MetaWhatsappProvider.name);
   private readonly phoneNumberId: string;
   private readonly accessToken: string;
   private readonly baseUrl: string;
