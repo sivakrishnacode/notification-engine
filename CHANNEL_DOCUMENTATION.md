@@ -1,10 +1,10 @@
-# Notification Engine: Channel Documentation
+# Notification Engine: Provider Documentation
 
-This document outlines the supported communication channels, their required recipient information, and sample payloads for enqueuing jobs.
+This document outlines the supported communication providers, their required reception information, and sample payloads for enqueuing jobs.
 
-## Supported Channels
+## Supported Providers
 
-| Channel | Description | Required Recipient Field | Provider Used |
+| Provider | Description | Required Reception Field | Strategy Used |
 | :--- | :--- | :--- | :--- |
 | `email` | Standard email notifications | `email` | AWS SES |
 | `sms` | Text messages to mobile devices | `phone` | AWS SNS |
@@ -15,13 +15,13 @@ This document outlines the supported communication channels, their required reci
 ---
 
 ## 1. Email Payload
-**Template Requirement**: Uses `subject`, `htmlBody`, and `textBody`.
+**Template Requirement**: Uses `subject`, `htmlBody`, and `body` (text).
 
 ```json
 {
-  "channel": "email",
+  "provider": "email",
   "userId": "user_123",
-  "recipient": {
+  "receptions": {
     "email": "customer@example.com"
   },
   "templateId": "welcome-email",
@@ -35,13 +35,13 @@ This document outlines the supported communication channels, their required reci
 ---
 
 ## 2. SMS Payload
-**Template Requirement**: Uses `textBody`.
+**Template Requirement**: Uses `body`.
 
 ```json
 {
-  "channel": "sms",
+  "provider": "sms",
   "userId": "user_123",
-  "recipient": {
+  "receptions": {
     "phone": "+919876543210"
   },
   "templateId": "otp-sms",
@@ -54,13 +54,13 @@ This document outlines the supported communication channels, their required reci
 ---
 
 ## 3. Push Notification Payload (FCM)
-**Template Requirement**: Uses `subject` (Title) and `textBody` (Body).
+**Template Requirement**: Uses `subject` (Title) and `body`.
 
 ```json
 {
-  "channel": "push",
+  "provider": "push",
   "userId": "user_123",
-  "recipient": {
+  "receptions": {
     "deviceToken": "fcm_registration_token_here"
   },
   "templateId": "order-shipped",
@@ -73,13 +73,13 @@ This document outlines the supported communication channels, their required reci
 ---
 
 ## 4. WhatsApp Payload
-**Template Requirement**: Uses `textBody`.
+**Template Requirement**: Uses `body` or template variables.
 
 ```json
 {
-  "channel": "whatsapp",
+  "provider": "whatsapp",
   "userId": "user_123",
-  "recipient": {
+  "receptions": {
     "waId": "+919876543210"
   },
   "templateId": "payment-success",
@@ -93,13 +93,13 @@ This document outlines the supported communication channels, their required reci
 ---
 
 ## 5. In-App Notification Payload
-**Template Requirement**: Uses `subject` and `textBody`. Delivered via WebSockets.
+**Template Requirement**: Uses `subject` and `body`. Delivered via WebSockets.
 
 ```json
 {
-  "channel": "in_app",
+  "provider": "in_app",
   "userId": "user_123",
-  "recipient": {
+  "receptions": {
      "userId": "user_123" 
   },
   "templateId": "system-alert",
@@ -112,19 +112,19 @@ This document outlines the supported communication channels, their required reci
 ---
 
 ## Multi-Channel "Fan-Out" Request
-To send the same notification to multiple channels simultaneously, use the `NotificationsController` endpoint:
+To send the same notification to multiple providers simultaneously, use the `NotificationsController` endpoint:
 
 **Endpoint**: `POST /notifications/send`
 
 ```json
 {
   "userId": "user_123",
-  "channels": ["email", "push"],
+  "providers": ["email", "push"],
   "templateId": "order-shipped",
   "data": {
     "orderId": "ORD-101"
   },
-  "recipient": {
+  "receptions": {
     "email": "customer@example.com",
     "deviceToken": "fcm_token_here"
   }
@@ -137,18 +137,18 @@ To send the same notification to multiple channels simultaneously, use the `Noti
 | :--- | :--- | :--- |
 | `jobId` | String (UUID) | Optional. Unique ID for the job. Auto-generated if missing. |
 | `userId` | String | Unique identifier of the user (from your external server). |
-| `channel` | Enum | One of: `email`, `sms`, `push`, `whatsapp`, `in_app`. |
+| `provider` | Enum | One of: `email`, `sms`, `push`, `whatsapp`, `in_app`. |
 | `templateId`| String | The ID of the pre-defined template to use. |
-| `data` | Object | Key-value pairs used to replace `{{variables}}` in your templates. |
-| `recipient` | Object | Contains contact info (`email`, `phone`, `deviceToken`, `waId`). |
+| `data` | Object | Key-value pairs used to replace `{{variables}}` in your templates. Also used for direct sending if `templateId` is missing (requires `body`). |
+| `receptions` | Object | Contains contact info (`email`, `phone`, `deviceToken`, `waId`). |
 | `priority` | Number | Optional. Higher numbers get processed first (BullMQ priority). |
-| `metadata` | Object | Optional. Any extra data you want to store with the delivery log. |
+| `meta` | Object | Optional. Any extra data you want to store with the delivery log. |
 
 ---
 
 ## Rate Limiting
 
-Rate limits are applied globally per user and channel. You can configure these in your `.env` file:
+Rate limits are applied globally per user and provider. You can configure these in your `.env` file:
 
 - `RATE_LIMIT_EMAIL`: Max emails per hour.
 - `RATE_LIMIT_SMS`: Max SMS per hour.

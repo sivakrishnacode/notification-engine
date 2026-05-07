@@ -51,7 +51,8 @@ jobs:
           script: |
             cd ${{ secrets.EC2_APP_DIR }}
             git pull origin main
-            npm ci --omit=dev
+            npm install
+            rm -rf dist
             npm run build
             pm2 restart notification-engine \
               || pm2 start dist/main.js \
