@@ -36,6 +36,7 @@ export class NotificationProcessor extends WorkerHost {
   async process(job: Job<any>): Promise<void> {
     const { id, data: rawData } = job;
     this.logger.debug(`Processing notification job: ${id}`);
+    this.logger.debug(`Job data: ${JSON.stringify(rawData)}`);
 
     // 1. Validate payload with Zod
     const validationResult = NotificationJobSchema.safeParse(rawData);
