@@ -24,6 +24,8 @@ export class QueueService {
       jobId,
       priority: priority ?? 0,
       delay,
+      removeOnComplete: { count: 200 },
+      removeOnFail: false,
     });
 
     this.logger.log(
