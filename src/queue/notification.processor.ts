@@ -57,7 +57,7 @@ export class NotificationProcessor extends WorkerHost {
         await this.deliveryLog.write({
           jobId: id!,
           userId,
-          channel: provider,
+          provider,
           status: 'RATE_LIMITED',
         });
         // Throwing error triggers BullMQ retry logic
@@ -92,7 +92,7 @@ export class NotificationProcessor extends WorkerHost {
         await this.deliveryLog.write({
           jobId: id!,
           userId,
-          channel: provider,
+          provider,
           status: 'DELIVERED',
           providerRef: result.providerRef,
         });
@@ -108,7 +108,7 @@ export class NotificationProcessor extends WorkerHost {
       await this.deliveryLog.write({
         jobId: id!,
         userId,
-        channel: provider,
+        provider,
         status: 'FAILED',
         error: (error as Error).message,
       });

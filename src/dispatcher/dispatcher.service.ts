@@ -1,7 +1,7 @@
 // src/dispatcher/dispatcher.service.ts
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ChannelStrategy, SendResult } from './channel.strategy';
+import { ProviderStrategy, SendResult } from './provider.strategy';
 import { NotificationJob } from '../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../templates/templates.service';
 import { EmailProvider } from '../providers/email/email.provider';
@@ -16,7 +16,7 @@ import { AppConfig } from '../config/configuration';
 @Injectable()
 export class DispatcherService {
   private readonly logger = new Logger(DispatcherService.name);
-  private readonly strategies: Map<string, ChannelStrategy>;
+  private readonly strategies: Map<string, ProviderStrategy>;
 
   constructor(
     private readonly emailProvider: EmailProvider,
@@ -27,7 +27,7 @@ export class DispatcherService {
     private readonly inAppProvider: InAppProvider,
     private readonly configService: ConfigService<AppConfig, true>,
   ) {
-    this.strategies = new Map<string, ChannelStrategy>([
+    this.strategies = new Map<string, ProviderStrategy>([
       ['email', this.emailProvider],
       ['sms', this.smsProvider],
       ['push', this.pushProvider],

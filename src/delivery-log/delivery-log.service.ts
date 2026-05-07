@@ -9,11 +9,11 @@ export type DeliveryStatus = 'DELIVERED' | 'FAILED' | 'SKIPPED' | 'RATE_LIMITED'
 export interface WriteLogOptions {
   jobId: string;
   userId: string;
-  channel: string;
+  provider: string;
   status: DeliveryStatus;
   providerRef?: string;
   error?: string;
-  metadata?: Record<string, any>;
+  meta?: Record<string, any>;
 }
 
 @Injectable()
@@ -25,11 +25,11 @@ export class DeliveryLogService {
       data: {
         jobId: options.jobId,
         userId: options.userId,
-        channel: options.channel,
+        channel: options.provider,
         status: options.status,
         providerRef: options.providerRef ?? null,
         error: options.error ?? null,
-        metadata: (options.metadata as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        metadata: (options.meta as Prisma.InputJsonValue) ?? Prisma.JsonNull,
       },
     });
   }

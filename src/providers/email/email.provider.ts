@@ -7,13 +7,13 @@ import {
   SendEmailCommand,
   SendEmailCommandInput,
 } from '@aws-sdk/client-ses';
-import { ChannelStrategy, SendResult } from '../../dispatcher/channel.strategy';
+import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
 import { AppConfig } from '../../config/configuration';
 
 @Injectable()
-export class EmailProvider implements ChannelStrategy {
+export class EmailProvider implements ProviderStrategy {
   private readonly logger = new Logger(EmailProvider.name);
   private readonly sesClient: SESClient;
   private readonly fromAddress: string;

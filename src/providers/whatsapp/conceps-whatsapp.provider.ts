@@ -3,13 +3,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { ChannelStrategy, SendResult } from '../../dispatcher/channel.strategy';
+import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
 import { AppConfig } from '../../config/configuration';
 
 @Injectable()
-export class ConcepsWhatsappProvider implements ChannelStrategy {
+export class ConcepsWhatsappProvider implements ProviderStrategy {
   private readonly logger = new Logger(ConcepsWhatsappProvider.name);
   private readonly token: string;
   private readonly baseUrl = 'https://api.conceps.in/v1/message/send-message';

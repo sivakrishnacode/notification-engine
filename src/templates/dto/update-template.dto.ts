@@ -5,7 +5,7 @@ import { IsString, IsOptional, IsEnum } from 'class-validator';
 export class UpdateTemplateDto {
   @IsEnum(['email', 'sms', 'push', 'whatsapp', 'in_app'])
   @IsOptional()
-  channel?: string;
+  provider?: string;
 
   @IsString()
   @IsOptional()

@@ -4,12 +4,12 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { AppConfig } from '../config/configuration';
-import { buildRateLimitConfig, ChannelRateLimits } from './rate-limit.config';
+import { buildRateLimitConfig, ProviderRateLimits } from './rate-limit.config';
 
 /**
  * Sliding-window rate limiter using Redis sorted sets.
  *
- * Key: rate:{userId}:{channel}
+ * Key: rate:{userId}:{provider}
  * The Lua script:
  *   1. Removes all entries older than the current window (1 hour)
  *   2. Counts remaining entries
@@ -42,7 +42,7 @@ const WINDOW_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 export class RateLimitService implements OnModuleDestroy {
   private readonly logger = new Logger(RateLimitService.name);
   private readonly redis: Redis;
-  private readonly limits: ChannelRateLimits;
+  private readonly limits: ProviderRateLimits;
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {
     const redisConfig = this.configService.get('redis', { infer: true });
@@ -60,9 +60,9 @@ export class RateLimitService implements OnModuleDestroy {
   /**
    * Returns true if the request is within rate limits, false if rate-limited.
    */
-  async allow(userId: string, channel: string): Promise<boolean> {
-    const limit = this.getLimitForChannel(channel);
-    const key = `rate:${userId}:${channel}`;
+  async allow(userId: string, provider: string): Promise<boolean> {
+    const limit = this.getLimitForProvider(provider);
+    const key = `rate:${userId}:${provider}`;
     const now = Date.now();
 
     const result = await this.redis.eval(
@@ -77,14 +77,14 @@ export class RateLimitService implements OnModuleDestroy {
     const allowed = result === 1;
 
     if (!allowed) {
-      this.logger.warn(`Rate limit exceeded: user=${userId}, channel=${channel}, limit=${limit}`);
+      this.logger.warn(`Rate limit exceeded: user=${userId}, provider=${provider}, limit=${limit}`);
     }
 
     return allowed;
   }
 
-  private getLimitForChannel(channel: string): number {
-    const key = channel as keyof ChannelRateLimits;
+  private getLimitForProvider(provider: string): number {
+    const key = provider as keyof ProviderRateLimits;
     return this.limits[key] ?? 10;
   }
 }

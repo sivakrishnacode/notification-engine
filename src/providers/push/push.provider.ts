@@ -1,7 +1,7 @@
 // src/providers/push/push.provider.ts
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ChannelStrategy, SendResult } from '../../dispatcher/channel.strategy';
+import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
 import * as admin from 'firebase-admin';
@@ -9,7 +9,7 @@ import * as serviceAccount from './ssdealer-33dc1-firebase-adminsdk-fbsvc-1e892c
 import { Message } from 'firebase-admin/lib/messaging/messaging-api';
 
 @Injectable()
-export class PushProvider implements ChannelStrategy {
+export class PushProvider implements ProviderStrategy {
   private readonly logger = new Logger(PushProvider.name);
 
   constructor() {

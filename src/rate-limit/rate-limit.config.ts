@@ -3,7 +3,7 @@
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/configuration';
 
-export interface ChannelRateLimits {
+export interface ProviderRateLimits {
   email: number;
   sms: number;
   push: number;
@@ -13,7 +13,7 @@ export interface ChannelRateLimits {
 
 export function buildRateLimitConfig(
   configService: ConfigService<AppConfig, true>,
-): ChannelRateLimits {
+): ProviderRateLimits {
   const rl = configService.get('rateLimit', { infer: true });
   return {
     email: rl.email,

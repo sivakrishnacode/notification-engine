@@ -22,9 +22,13 @@ export class TemplatesService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateTemplateDto) {
+  async create(dto: CreateTemplateDto) {
+    const { provider, ...rest } = dto;
     return this.prisma.template.create({
-      data,
+      data: {
+        ...rest,
+        channel: provider,
+      },
     });
   }
 
@@ -44,12 +48,16 @@ export class TemplatesService {
     return template;
   }
 
-  async update(id: string, data: UpdateTemplateDto) {
+  async update(id: string, dto: UpdateTemplateDto) {
     // Check if exists first
     await this.findOne(id);
+    const { provider, ...rest } = dto;
     return this.prisma.template.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        ...(provider ? { channel: provider } : {}),
+      },
     });
   }
 

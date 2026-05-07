@@ -1,14 +1,14 @@
 // src/providers/in-app/in-app.provider.ts
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ChannelStrategy, SendResult } from '../../dispatcher/channel.strategy';
+import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationGateway } from '../../websocket/notification.gateway';
 
 @Injectable()
-export class InAppProvider implements ChannelStrategy {
+export class InAppProvider implements ProviderStrategy {
   private readonly logger = new Logger(InAppProvider.name);
 
   constructor(
