@@ -27,7 +27,7 @@ export class QueueService {
     });
 
     this.logger.log(
-      { jobId, channel: job.channel, delay, priority },
+      { jobId, provider: job.provider, delay, priority },
       'Notification job enqueued successfully',
     );
   }

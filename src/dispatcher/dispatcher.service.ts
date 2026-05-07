@@ -41,18 +41,18 @@ export class DispatcherService {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    let strategyKey: string = job.channel;
+    let strategyKey: string = job.provider;
 
-    if (job.channel === 'whatsapp') {
-      const preferredProvider = job.provider || this.configService.get('whatsappProvider', { infer: true });
+    if (job.provider === 'whatsapp') {
+      const preferredProvider = (job.meta?.whatsappProvider as string) || this.configService.get('whatsappProvider', { infer: true });
       strategyKey = `whatsapp_${preferredProvider}`;
     }
 
     const strategy = this.strategies.get(strategyKey);
 
     if (!strategy) {
-      this.logger.error(`No strategy found for key: ${strategyKey} (channel: ${job.channel})`);
-      throw new Error(`Unsupported channel/provider: ${strategyKey}`);
+      this.logger.error(`No strategy found for key: ${strategyKey} (provider: ${job.provider})`);
+      throw new Error(`Unsupported provider: ${strategyKey}`);
     }
 
     this.logger.debug(`Routing job ${job.jobId} to provider ${strategyKey}`);

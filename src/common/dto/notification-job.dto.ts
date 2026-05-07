@@ -1,13 +1,11 @@
-// src/common/dto/notification-job.dto.ts
-
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 
 export const NotificationJobSchema = z.object({
   jobId: z.string().default(() => randomUUID()),
-  channel: z.enum(['email', 'sms', 'push', 'whatsapp', 'in_app']),
+  provider: z.enum(['email', 'sms', 'push', 'whatsapp', 'in_app']),
   userId: z.string().min(1),
-  recipient: z
+  receptions: z
     .object({
       email: z.string().email().optional(),
       phone: z
@@ -28,34 +26,34 @@ export const NotificationJobSchema = z.object({
         r.phone !== undefined ||
         r.deviceToken !== undefined ||
         r.waId !== undefined,
-      { message: 'At least one recipient field must be provided' },
+      { message: 'At least one reception field must be provided' },
     ),
   templateId: z.string().optional(),
-  content: z
+  data: z
     .object({
       subject: z.string().optional(),
       body: z.string().optional(),
       htmlBody: z.string().optional(),
     })
-    .optional(),
-  data: z.record(z.string(), z.unknown()).optional().default({}),
+    .catchall(z.unknown())
+    .optional()
+    .default({}),
   priority: z.number().int().min(0).optional(),
   scheduledAt: z.string().datetime().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  provider: z.string().optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
 })
   .refine(
     (data) => {
-      if (data.channel !== 'in_app' && !data.recipient) {
+      if (data.provider !== 'in_app' && !data.receptions) {
         return false;
       }
       return true;
     },
-    { message: 'recipient is required for this channel', path: ['recipient'] },
+    { message: 'receptions is required for this provider', path: ['receptions'] },
   )
   .refine(
     (data) => {
-      if (data.channel === 'whatsapp' && !data.templateId) {
+      if (data.provider === 'whatsapp' && !data.templateId) {
         return false;
       }
       return true;
@@ -64,13 +62,13 @@ export const NotificationJobSchema = z.object({
   )
   .refine(
     (data) => {
-      if (!data.templateId && !data.content?.body) {
+      if (!data.templateId && !data.data?.body) {
         return false;
       }
       return true;
     },
     {
-      message: 'Either templateId or content.body must be provided',
+      message: 'Either templateId or data.body must be provided',
       path: ['templateId'],
     },
   );

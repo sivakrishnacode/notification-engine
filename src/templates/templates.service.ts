@@ -62,21 +62,21 @@ export class TemplatesService {
 
   async render(
     templateId: string,
-    channel: string,
+    provider: string,
     data: Record<string, unknown>,
   ): Promise<RenderedTemplate> {
     const template = await this.prisma.template.findFirst({
-      where: { id: templateId, channel },
+      where: { id: templateId, channel: provider },
     });
 
     if (!template) {
       throw new NotFoundException(
-        `Template not found: id="${templateId}" channel="${channel}"`,
+        `Template not found: id="${templateId}" provider="${provider}"`,
       );
     }
 
     this.logger.debug(
-      { templateId, channel },
+      { templateId, provider },
       'Rendering template',
     );
 

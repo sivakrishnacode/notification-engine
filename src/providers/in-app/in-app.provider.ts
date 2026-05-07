@@ -30,10 +30,10 @@ export class InAppProvider implements ChannelStrategy {
         channel: 'in_app',
         status: 'DELIVERED',
         metadata: {
-          subject: rendered.subject,
-          body: rendered.body,
-          htmlBody: rendered.htmlBody,
-          ...((job.metadata as any) || {}),
+          jobId: job.jobId,
+          provider: job.provider,
+          templateId: job.templateId,
+          ...((job.meta as any) || {}),
         },
       },
     });

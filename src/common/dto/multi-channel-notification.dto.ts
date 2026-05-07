@@ -4,17 +4,18 @@ import { z } from 'zod';
 
 export const MultiChannelNotificationSchema = z.object({
   userId: z.string().min(1),
-  channels: z.array(z.enum(['email', 'sms', 'push', 'whatsapp', 'in_app'])).min(1),
+  providers: z.array(z.enum(['email', 'sms', 'push', 'whatsapp', 'in_app'])).min(1),
   templateId: z.string().optional(),
-  content: z
+  data: z
     .object({
       subject: z.string().optional(),
       body: z.string().optional(),
       htmlBody: z.string().optional(),
     })
-    .optional(),
-  data: z.record(z.string(), z.unknown()).optional().default({}),
-  recipient: z
+    .catchall(z.unknown())
+    .optional()
+    .default({}),
+  receptions: z
     .object({
       email: z.string().email().optional(),
       phone: z
@@ -35,25 +36,25 @@ export const MultiChannelNotificationSchema = z.object({
         r.phone !== undefined ||
         r.deviceToken !== undefined ||
         r.waId !== undefined,
-      { message: 'At least one recipient field must be provided' },
+      { message: 'At least one reception field must be provided' },
     ),
   priority: z.number().int().min(0).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
 })
   .refine(
     (data) => {
-      // If any channel is NOT in_app, recipient is required
-      const needsRecipient = data.channels.some((c) => c !== 'in_app');
-      if (needsRecipient && !data.recipient) {
+      // If any provider is NOT in_app, receptions is required
+      const needsReception = data.providers.some((c) => c !== 'in_app');
+      if (needsReception && !data.receptions) {
         return false;
       }
       return true;
     },
-    { message: 'recipient is required for these channels', path: ['recipient'] },
+    { message: 'receptions is required for these providers', path: ['receptions'] },
   )
   .refine(
     (data) => {
-      if (data.channels.includes('whatsapp') && !data.templateId) {
+      if (data.providers.includes('whatsapp') && !data.templateId) {
         return false;
       }
       return true;
@@ -62,13 +63,13 @@ export const MultiChannelNotificationSchema = z.object({
   )
   .refine(
     (data) => {
-      if (!data.templateId && !data.content?.body) {
+      if (!data.templateId && !data.data?.body) {
         return false;
       }
       return true;
     },
     {
-      message: 'Either templateId or content.body must be provided',
+      message: 'Either templateId or data.body must be provided',
       path: ['templateId'],
     },
   );

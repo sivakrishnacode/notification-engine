@@ -31,10 +31,10 @@ export class SmsProvider implements ChannelStrategy {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    const phoneNumber = job.recipient?.phone;
+    const phoneNumber = job.receptions?.phone;
     if (!phoneNumber) {
       throw new Error(
-        `SMS provider: no recipient.phone in job ${job.jobId}`,
+        `SMS provider: no receptions.phone in job ${job.jobId}`,
       );
     }
 

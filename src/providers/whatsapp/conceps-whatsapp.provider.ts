@@ -23,10 +23,10 @@ export class ConcepsWhatsappProvider implements ChannelStrategy {
     job: NotificationJob,
     rendered: RenderedTemplate,
   ): Promise<SendResult> {
-    const waId = job.recipient?.waId;
+    const waId = job.receptions?.waId;
     if (!waId) {
       throw new Error(
-        `Conceps WhatsApp provider: no recipient.waId in job ${job.jobId}`,
+        `Conceps WhatsApp provider: no receptions.waId in job ${job.jobId}`,
       );
     }
 
@@ -62,9 +62,9 @@ export class ConcepsWhatsappProvider implements ChannelStrategy {
     // If templateId is provided, we assume it's a template message
     if (job.templateId) {
       // In a real scenario, we might want to fetch the template details to get the name
-      // For now, we'll use the job.metadata.templateName if provided, otherwise fallback to templateId
-      const templateName = (job.metadata?.templateName as string) || job.templateId;
-      const languageCode = (job.metadata?.languageCode as string) || 'en';
+      // For now, we'll use the job.meta?.templateName if provided, otherwise fallback to templateId
+      const templateName = (job.meta?.templateName as string) || job.templateId;
+      const languageCode = (job.meta?.languageCode as string) || 'en';
 
       const parameters = this.extractParameters(job);
 

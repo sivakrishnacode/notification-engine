@@ -6,39 +6,61 @@ const prisma = new PrismaClient();
 
 async function main() {
   const templates = [
+    // SMS Templates
     {
-      id: 'welcome-email',
-      name: 'Welcome Email',
-      channel: 'email',
-      subject: 'Welcome to our platform, {{name}}!',
-      textBody: 'Hi {{name}}, we are glad to have you on board.',
-      htmlBody: '<h1>Welcome!</h1><p>Hi <strong>{{name}}</strong>, we are glad to have you on board.</p>',
-    },
-    {
-      id: 'otp-sms',
-      name: 'OTP SMS',
+      id: 'sms-otp',
+      name: 'OTP Verification',
       channel: 'sms',
-      textBody: 'Your verification code is: {{otp}}. It will expire in 5 minutes.',
+      textBody: 'Your verification code is: {{otp}}. Do not share it with anyone.',
     },
     {
-      id: 'order-push',
-      name: 'Order Shipped Push',
+      id: 'sms-order-details',
+      name: 'Order Details',
+      channel: 'sms',
+      textBody: 'Order #{{orderId}} of amount {{amount}} has been placed successfully. Track here: {{trackUrl}}',
+    },
+
+    // Push Notification Templates
+    {
+      id: 'push-amount-credit',
+      name: 'Amount Credited',
       channel: 'push',
-      subject: 'Order Shipped!',
-      textBody: 'Great news! Your order #{{orderId}} has been shipped and is on its way.',
+      subject: 'Wallet Updated',
+      textBody: 'Amount {{amount}} has been credited to your wallet. New balance: {{balance}}',
     },
     {
-      id: 'payment-whatsapp',
-      name: 'Payment Success WhatsApp',
-      channel: 'whatsapp',
-      textBody: 'Hi {{name}}, your payment of {{amount}} for order #{{orderId}} was successful. Thank you!',
+      id: 'push-user-event',
+      name: 'User Event Push',
+      channel: 'push',
+      subject: 'New Update',
+      textBody: 'Hi {{name}}, something interesting happened: {{eventDescription}}',
     },
+
+    // In-App Websocket Templates
     {
-      id: 'system-alert-in-app',
-      name: 'System Alert In-App',
+      id: 'in-app-user-event',
+      name: 'User Event In-App',
       channel: 'in_app',
-      subject: 'System Maintenance',
-      textBody: 'The system will undergo maintenance at {{time}}. Please save your work.',
+      subject: 'Activity Notification',
+      textBody: 'You have a new activity: {{eventDetails}}',
+    },
+
+    // WhatsApp Templates
+    {
+      id: 'whatsapp-user-event',
+      name: 'User Event WhatsApp',
+      channel: 'whatsapp',
+      textBody: 'Hi {{name}}, just a quick update on your recent activity: {{update}}',
+    },
+
+    // Email Templates
+    {
+      id: 'email-user-event',
+      name: 'User Event Email',
+      channel: 'email',
+      subject: 'Notification: {{subject}}',
+      textBody: 'Hi {{name}},\n\nThis is a notification regarding your recent activity: {{activity}}.\n\nBest regards,\nTeam',
+      htmlBody: '<h1>Activity Update</h1><p>Hi <strong>{{name}}</strong>,</p><p>This is a notification regarding your recent activity: <em>{{activity}}</em>.</p><p>Best regards,<br>Team</p>',
     },
   ];
 

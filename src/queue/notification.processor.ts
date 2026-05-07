@@ -48,39 +48,39 @@ export class NotificationProcessor extends WorkerHost {
     if (!notificationJob.jobId) {
       notificationJob.jobId = String(id);
     }
-    const { userId, channel, templateId, data } = notificationJob;
+    const { userId, provider, templateId, data } = notificationJob;
 
     try {
       // 2. Rate limiting
-      const isRateLimited = !(await this.rateLimit.allow(userId, channel));
+      const isRateLimited = !(await this.rateLimit.allow(userId, provider));
       if (isRateLimited) {
         await this.deliveryLog.write({
           jobId: id!,
           userId,
-          channel,
+          channel: provider,
           status: 'RATE_LIMITED',
         });
         // Throwing error triggers BullMQ retry logic
-        throw new Error(`Rate limit exceeded for user ${userId} on channel ${channel}`);
+        throw new Error(`Rate limit exceeded for user ${userId} on provider ${provider}`);
       }
 
-      // 4. Render template or use direct content
+      // 4. Render template or use direct data
       let rendered;
       if (notificationJob.templateId) {
         rendered = await this.templates.render(
           notificationJob.templateId,
-          channel,
+          provider,
           data || {},
         );
-      } else if (notificationJob.content) {
+      } else if (notificationJob.data && notificationJob.data.body) {
         rendered = {
-          subject: notificationJob.content.subject,
-          body: notificationJob.content.body!, // Refinement ensures body exists if no templateId
-          htmlBody: notificationJob.content.htmlBody,
+          subject: notificationJob.data.subject,
+          body: notificationJob.data.body,
+          htmlBody: notificationJob.data.htmlBody,
         };
       } else {
         throw new UnrecoverableError(
-          'Internal logic error: neither templateId nor content provided after validation',
+          'Internal logic error: neither templateId nor data.body provided after validation',
         );
       }
 
@@ -88,17 +88,17 @@ export class NotificationProcessor extends WorkerHost {
       const result = await this.dispatcher.send(notificationJob, rendered);
 
       // 6. Write success log
-      if (channel !== 'in_app') {
+      if (provider !== 'in_app') {
         await this.deliveryLog.write({
           jobId: id!,
           userId,
-          channel,
+          channel: provider,
           status: 'DELIVERED',
           providerRef: result.providerRef,
         });
       }
 
-      this.logger.log(`Notification delivered: job=${id}, channel=${channel}, user=${userId}, ref=${result.providerRef}`);
+      this.logger.log(`Notification delivered: job=${id}, provider=${provider}, user=${userId}, ref=${result.providerRef}`);
     } catch (error) {
       if (error instanceof UnrecoverableError) throw error;
 
@@ -108,7 +108,7 @@ export class NotificationProcessor extends WorkerHost {
       await this.deliveryLog.write({
         jobId: id!,
         userId,
-        channel,
+        channel: provider,
         status: 'FAILED',
         error: (error as Error).message,
       });
