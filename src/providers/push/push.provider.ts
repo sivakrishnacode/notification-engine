@@ -5,7 +5,6 @@ import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
 import * as admin from 'firebase-admin';
-import * as serviceAccount from './ssdealer-33dc1-firebase-adminsdk-fbsvc-1e892cbe38.json';
 import { Message } from 'firebase-admin/lib/messaging/messaging-api';
 
 @Injectable()
@@ -14,10 +13,13 @@ export class PushProvider implements ProviderStrategy {
 
   constructor() {
     if (!admin.apps.length) {
-      // Create a mutable copy of the service account to avoid "only a getter" errors
-      const sa = { ...serviceAccount } as admin.ServiceAccount;
       admin.initializeApp({
-        credential: admin.credential.cert(sa),
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          // Replace literal '\n' characters with actual line breaks
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
       });
       this.logger.log('Firebase Admin SDK initialized successfully');
     }
