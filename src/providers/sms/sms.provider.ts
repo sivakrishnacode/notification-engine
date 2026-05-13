@@ -6,9 +6,8 @@ import {
   SNSClient,
   PublishCommand,
 } from '@aws-sdk/client-sns';
-import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
+import { ProviderStrategy, SendResult, RenderedContent } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
-import { RenderedTemplate } from '../../templates/templates.service';
 import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
@@ -42,7 +41,7 @@ export class SmsProvider implements ProviderStrategy {
 
   async send(
     job: NotificationJob,
-    rendered: RenderedTemplate,
+    content: RenderedContent,
   ): Promise<SendResult> {
     const phoneNumber = job.receptions?.phone;
     if (!phoneNumber) {
@@ -60,7 +59,7 @@ export class SmsProvider implements ProviderStrategy {
 
     const command = new PublishCommand({
       PhoneNumber: phoneNumber,
-      Message: rendered.body,
+      Message: content.body,
     });
 
     const response = await snsClient.send(command);

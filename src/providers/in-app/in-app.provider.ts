@@ -1,9 +1,8 @@
 // src/providers/in-app/in-app.provider.ts
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
+import { ProviderStrategy, SendResult, RenderedContent } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
-import { RenderedTemplate } from '../../templates/templates.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationGateway } from '../../websocket/notification.gateway';
 
@@ -18,7 +17,7 @@ export class InAppProvider implements ProviderStrategy {
 
   async send(
     job: NotificationJob,
-    rendered: RenderedTemplate,
+    content: RenderedContent,
   ): Promise<SendResult> {
     this.logger.debug(`Saving in-app notification: job=${job.jobId}, user=${job.userId}`);
 
@@ -42,8 +41,8 @@ export class InAppProvider implements ProviderStrategy {
     this.gateway.emitToUser(job.userId, {
       id: log.id,
       jobId: job.jobId,
-      subject: rendered.subject,
-      body: rendered.body,
+      subject: content.subject,
+      body: content.body,
       createdAt: log.createdAt,
     });
 

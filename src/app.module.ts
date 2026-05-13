@@ -6,7 +6,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
 import { DispatcherModule } from './dispatcher/dispatcher.module';
 import { ProvidersModule } from './providers/providers.module';
-import { TemplatesModule } from './templates/templates.module';
 import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { DeliveryLogModule } from './delivery-log/delivery-log.module';
 import { WebsocketModule } from './websocket/websocket.module';
@@ -22,7 +21,6 @@ import { AppController } from './app.controller';
     QueueModule,
     DispatcherModule,
     ProvidersModule,
-    TemplatesModule,
     RateLimitModule,
     DeliveryLogModule,
     WebsocketModule,

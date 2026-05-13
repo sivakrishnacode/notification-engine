@@ -2,9 +2,8 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
+import { ProviderStrategy, SendResult, RenderedContent } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
-import { RenderedTemplate } from '../../templates/templates.service';
 import * as admin from 'firebase-admin';
 import { Message } from 'firebase-admin/lib/messaging/messaging-api';
 import { AppConfig } from '../../config/configuration';
@@ -47,7 +46,7 @@ export class PushProvider implements ProviderStrategy {
 
   async send(
     job: NotificationJob,
-    rendered: RenderedTemplate,
+    content: RenderedContent,
   ): Promise<SendResult> {
     const deviceToken = job.receptions?.deviceToken;
     if (!deviceToken) {
@@ -66,8 +65,8 @@ export class PushProvider implements ProviderStrategy {
 
       const message: Message = {
         notification: {
-          title: rendered.subject ?? 'Notification',
-          body: rendered.body,
+          title: content.subject ?? 'Notification',
+          body: content.body,
           imageUrl: 'https://file-examples.com/storage/fe1596838569f9c5b943e40/2017/10/file_example_JPG_100kB.jpg'
         },
         token: deviceToken,

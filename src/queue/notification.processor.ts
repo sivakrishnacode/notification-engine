@@ -13,9 +13,9 @@ import {
   NotificationJob,
 } from '../common/dto/notification-job.dto';
 import { RateLimitService } from '../rate-limit/rate-limit.service';
-import { TemplatesService } from '../templates/templates.service';
 import { DispatcherService } from '../dispatcher/dispatcher.service';
 import { DeliveryLogService } from '../delivery-log/delivery-log.service';
+import { RenderedContent } from '../dispatcher/provider.strategy';
 
 @Processor('notifications', {
   concurrency: parseInt(process.env['WORKER_CONCURRENCY'] || '5', 10),
@@ -25,7 +25,6 @@ export class NotificationProcessor extends WorkerHost {
 
   constructor(
     private readonly rateLimit: RateLimitService,
-    private readonly templates: TemplatesService,
     private readonly dispatcher: DispatcherService,
     private readonly deliveryLog: DeliveryLogService,
     @InjectQueue('notifications-dlq') private readonly dlqQueue: Queue,
@@ -36,7 +35,6 @@ export class NotificationProcessor extends WorkerHost {
   async process(job: Job<any>): Promise<void> {
     const { id, data: rawData } = job;
     this.logger.debug(`Processing notification job: ${id}`);
-    this.logger.debug(`Job data: ${JSON.stringify(rawData)}`);
 
     // 1. Validate payload with Zod
     const validationResult = NotificationJobSchema.safeParse(rawData);
@@ -61,32 +59,20 @@ export class NotificationProcessor extends WorkerHost {
           provider,
           status: 'RATE_LIMITED',
         });
-        // Throwing error triggers BullMQ retry logic
         throw new Error(`Rate limit exceeded for user ${userId} on provider ${provider}`);
       }
 
-      // 4. Render template or use direct data
-      let rendered;
-      if (notificationJob.templateId) {
-        rendered = await this.templates.render(
-          notificationJob.templateId,
-          provider,
-          data || {},
-        );
-      } else if (notificationJob.data && notificationJob.data.body) {
-        rendered = {
-          subject: notificationJob.data.subject,
-          body: notificationJob.data.body,
-          htmlBody: notificationJob.data.htmlBody,
-        };
-      } else {
-        throw new UnrecoverableError(
-          'Internal logic error: neither templateId nor data.body provided after validation',
-        );
-      }
+      // 4. Prepare content (Directly from job data)
+      // For non-WhatsApp providers, we use subject/body/htmlBody
+      // For WhatsApp, the provider itself handles templates externally
+      const content: RenderedContent = {
+        subject: data?.subject as string | undefined,
+        body: data?.body as string || '',
+        htmlBody: data?.htmlBody as string | undefined,
+      };
 
       // 5. Dispatch notification
-      const result = await this.dispatcher.send(notificationJob, rendered);
+      const result = await this.dispatcher.send(notificationJob, content);
 
       // 6. Write success log
       if (provider !== 'in_app') {

@@ -1,12 +1,17 @@
 // src/dispatcher/provider.strategy.ts
 
 import { NotificationJob } from '../common/dto/notification-job.dto';
-import { RenderedTemplate } from '../templates/templates.service';
+
+export interface RenderedContent {
+  subject?: string;
+  body: string;
+  htmlBody?: string;
+}
 
 export interface SendResult {
   providerRef: string;
 }
 
 export interface ProviderStrategy {
-  send(job: NotificationJob, rendered: RenderedTemplate): Promise<SendResult>;
+  send(job: NotificationJob, content: RenderedContent): Promise<SendResult>;
 }

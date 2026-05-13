@@ -3,9 +3,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
+import { ProviderStrategy, SendResult, RenderedContent } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
-import { RenderedTemplate } from '../../templates/templates.service';
 import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
@@ -32,7 +31,7 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
 
   async send(
     job: NotificationJob,
-    rendered: RenderedTemplate,
+    content: RenderedContent,
   ): Promise<SendResult> {
     const waId = job.receptions?.waId;
     if (!waId) {
@@ -50,7 +49,7 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
 
     this.logger.debug(`Sending Conceps WhatsApp message (${server}): job=${job.jobId}, waId=${waId}`);
 
-    const payload = this.buildPayload(job, rendered, waId);
+    const payload = this.buildPayload(job, content, waId);
 
     try {
       const response = await axios.post(
@@ -75,7 +74,7 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
     }
   }
 
-  private buildPayload(job: NotificationJob, rendered: RenderedTemplate, to: string) {
+  private buildPayload(job: NotificationJob, content: RenderedContent, to: string) {
     if (job.templateId) {
       const templateName = job.templateId;
       const languageCode = 'en';
@@ -107,7 +106,7 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
       to,
       type: 'text',
       text: {
-        body: rendered.body,
+        body: content.body,
       },
     };
   }

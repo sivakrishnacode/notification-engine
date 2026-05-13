@@ -7,9 +7,8 @@ import {
   SendEmailCommand,
   SendEmailCommandInput,
 } from '@aws-sdk/client-ses';
-import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
+import { ProviderStrategy, SendResult, RenderedContent } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
-import { RenderedTemplate } from '../../templates/templates.service';
 import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
@@ -43,7 +42,7 @@ export class EmailProvider implements ProviderStrategy {
 
   async send(
     job: NotificationJob,
-    rendered: RenderedTemplate,
+    content: RenderedContent,
   ): Promise<SendResult> {
     const toAddress = job.receptions?.email;
     if (!toAddress) {
@@ -66,18 +65,18 @@ export class EmailProvider implements ProviderStrategy {
       },
       Message: {
         Subject: {
-          Data: rendered.subject ?? '(no subject)',
+          Data: content.subject ?? '(no subject)',
           Charset: 'UTF-8',
         },
         Body: {
           Text: {
-            Data: rendered.body,
+            Data: content.body,
             Charset: 'UTF-8',
           },
-          ...(rendered.htmlBody
+          ...(content.htmlBody
             ? {
               Html: {
-                Data: rendered.htmlBody,
+                Data: content.htmlBody,
                 Charset: 'UTF-8',
               },
             }
