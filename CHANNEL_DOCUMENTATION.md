@@ -135,6 +135,7 @@ To send the same notification to multiple providers simultaneously, use the `Not
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
+| `Request_server` | Enum | One of: `GAMERZ_BANK`, `SPACE_SOLAR`. Defaults to `GAMERZ_BANK`. |
 | `jobId` | String (UUID) | Optional. Unique ID for the job. Auto-generated if missing. |
 | `userId` | String | Unique identifier of the user (from your external server). |
 | `provider` | Enum | One of: `email`, `sms`, `push`, `whatsapp`, `in_app`. |
@@ -162,10 +163,14 @@ If a limit is reached, the job status will be marked as `RATE_LIMITED` in the lo
 
 ## Environment Setup
 
-Ensure the following are configured for each provider:
+The engine uses separate credentials for each application. Configure these in your `.env` file using the following prefixes:
 
+- **GAMERZ_BANK**: `GAMERZ_BANK_*` (e.g., `GAMERZ_BANK_FIREBASE_PROJECT_ID`)
+- **SPACE_SOLAR**: `SPACE_SOLAR_*` (e.g., `SPACE_SOLAR_FIREBASE_PROJECT_ID`)
+
+**Credentials required per provider:**
 - **Email (SES)**: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SES_FROM_ADDRESS`.
 - **SMS (SNS)**: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`.
-- **Push (FCM)**: The `serviceAccountKey.json` file must be present in `src/providers/push/`.
-- **WhatsApp**: `META_ACCESS_TOKEN`, `META_PHONE_NUMBER_ID`.
+- **Push (FCM)**: `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`.
+- **WhatsApp**: `META_ACCESS_TOKEN`, `META_PHONE_NUMBER_ID` or `CONCEPS_TOKEN`.
 - **In-App**: Handled automatically via Socket.io.

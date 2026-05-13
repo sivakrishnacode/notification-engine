@@ -16,7 +16,7 @@ export class FanOutService {
    * Enqueues separate jobs for each requested channel.
    */
   async send(request: MultiChannelNotification): Promise<{ jobIds: string[] }> {
-    const { providers, userId, templateId, data, receptions, priority, meta } = request;
+    const { Request_server, providers, userId, templateId, data, receptions, priority, meta } = request;
     const jobIds: string[] = [];
 
     this.logger.log(`Fanning out notification for user ${userId} to ${providers.length} providers: ${providers.join(', ')}`);
@@ -25,6 +25,7 @@ export class FanOutService {
       const jobId = randomUUID();
       const job: NotificationJob = {
         jobId,
+        Request_server,
         userId,
         provider,
         templateId,

@@ -1,8 +1,10 @@
 // src/common/dto/multi-channel-notification.dto.ts
 
 import { z } from 'zod';
+import { RequestServerEnum } from './notification-job.dto';
 
 export const MultiChannelNotificationSchema = z.object({
+  Request_server: RequestServerEnum.default('GAMERZ_BANK'),
   userId: z.string().min(1),
   providers: z.array(z.enum(['email', 'sms', 'push', 'whatsapp', 'in_app'])).min(1),
   templateId: z.string().optional(),
