@@ -6,20 +6,27 @@ import axios from 'axios';
 import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
-import { AppConfig } from '../../config/configuration';
+import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
 export class MetaWhatsappProvider implements ProviderStrategy {
   private readonly logger = new Logger(MetaWhatsappProvider.name);
-  private readonly phoneNumberId: string;
-  private readonly accessToken: string;
-  private readonly baseUrl: string;
+  private readonly metaConfigs = new Map<string, ServerConfig['meta']>();
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {
-    const meta = this.configService.get('meta', { infer: true });
-    this.phoneNumberId = meta.phoneNumberId;
-    this.accessToken = meta.accessToken;
-    this.baseUrl = `https://graph.facebook.com/v19.0/${this.phoneNumberId}/messages`;
+    const servers = this.configService.get('servers', { infer: true });
+
+    this.initializeMetaConfig('GAMERZ_BANK', servers.GAMERZ_BANK.meta);
+    this.initializeMetaConfig('SPACE_SOLAR', servers.SPACE_SOLAR.meta);
+  }
+
+  private initializeMetaConfig(name: string, config: ServerConfig['meta']) {
+    if (!config.phoneNumberId || !config.accessToken) {
+      this.logger.warn(`Meta WhatsApp config for ${name} is incomplete. Skipping.`);
+      return;
+    }
+    this.metaConfigs.set(name, config);
+    this.logger.log(`Meta WhatsApp config for ${name} initialized successfully`);
   }
 
   async send(
@@ -33,11 +40,20 @@ export class MetaWhatsappProvider implements ProviderStrategy {
       );
     }
 
-    this.logger.debug(`Sending WhatsApp message: job=${job.jobId}, waId=${waId}`);
+    const server = job.Request_server ?? 'GAMERZ_BANK';
+    const config = this.metaConfigs.get(server);
+
+    if (!config) {
+      throw new Error(`Meta WhatsApp config for server ${server} not initialized`);
+    }
+
+    const baseUrl = `https://graph.facebook.com/v19.0/${config.phoneNumberId}/messages`;
+
+    this.logger.debug(`Sending Meta WhatsApp message (${server}): job=${job.jobId}, waId=${waId}`);
 
     try {
       const response = await axios.post(
-        this.baseUrl,
+        baseUrl,
         {
           messaging_product: 'whatsapp',
           to: waId,
@@ -46,19 +62,19 @@ export class MetaWhatsappProvider implements ProviderStrategy {
         },
         {
           headers: {
-            Authorization: `Bearer ${this.accessToken}`,
+            Authorization: `Bearer ${config.accessToken}`,
             'Content-Type': 'application/json',
           },
         },
       );
 
       const providerRef = response.data.messages[0].id;
-      this.logger.log(`WhatsApp message sent successfully: job=${job.jobId}, waId=${waId}, providerRef=${providerRef}`);
+      this.logger.log(`Meta WhatsApp message sent successfully (${server}): job=${job.jobId}, waId=${waId}, providerRef=${providerRef}`);
 
       return { providerRef };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        this.logger.error(`Failed to send WhatsApp message for job ${job.jobId}: ${JSON.stringify(error.response?.data || error.message)}`);
+        this.logger.error(`Failed to send Meta WhatsApp message for job ${job.jobId}: ${JSON.stringify(error.response?.data || error.message)}`);
       }
       throw error;
     }

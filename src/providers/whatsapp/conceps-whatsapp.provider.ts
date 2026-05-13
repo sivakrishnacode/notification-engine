@@ -6,17 +6,28 @@ import axios from 'axios';
 import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
-import { AppConfig } from '../../config/configuration';
+import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
 export class ConcepsWhatsappProvider implements ProviderStrategy {
   private readonly logger = new Logger(ConcepsWhatsappProvider.name);
-  private readonly token: string;
+  private readonly concepsTokens = new Map<string, string>();
   private readonly baseUrl = 'https://api.conceps.in/v1/message/send-message';
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {
-    const conceps = this.configService.get('conceps', { infer: true });
-    this.token = conceps.token;
+    const servers = this.configService.get('servers', { infer: true });
+
+    this.initializeConcepsToken('GAMERZ_BANK', servers.GAMERZ_BANK.conceps);
+    this.initializeConcepsToken('SPACE_SOLAR', servers.SPACE_SOLAR.conceps);
+  }
+
+  private initializeConcepsToken(name: string, config: ServerConfig['conceps']) {
+    if (!config.token) {
+      this.logger.warn(`Conceps WhatsApp token for ${name} is missing. Skipping.`);
+      return;
+    }
+    this.concepsTokens.set(name, config.token);
+    this.logger.log(`Conceps WhatsApp token for ${name} initialized successfully`);
   }
 
   async send(
@@ -30,13 +41,20 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
       );
     }
 
-    this.logger.debug(`Sending Conceps WhatsApp message: job=${job.jobId}, waId=${waId}`);
+    const server = job.Request_server ?? 'GAMERZ_BANK';
+    const token = this.concepsTokens.get(server);
+
+    if (!token) {
+      throw new Error(`Conceps WhatsApp token for server ${server} not initialized`);
+    }
+
+    this.logger.debug(`Sending Conceps WhatsApp message (${server}): job=${job.jobId}, waId=${waId}`);
 
     const payload = this.buildPayload(job, rendered, waId);
 
     try {
       const response = await axios.post(
-        `${this.baseUrl}?token=${this.token}`,
+        `${this.baseUrl}?token=${token}`,
         payload,
         {
           headers: {
@@ -45,9 +63,8 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
         },
       );
 
-      // Conceps API response might vary, usually contains a message ID or success status
       const providerRef = response.data.id || response.data.messageId || 'conceps-success';
-      this.logger.log(`Conceps WhatsApp message sent successfully: job=${job.jobId}, waId=${waId}, providerRef=${providerRef}`);
+      this.logger.log(`Conceps WhatsApp message sent successfully (${server}): job=${job.jobId}, waId=${waId}, providerRef=${providerRef}`);
 
       return { providerRef };
     } catch (error) {
@@ -59,13 +76,9 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
   }
 
   private buildPayload(job: NotificationJob, rendered: RenderedTemplate, to: string) {
-    // If templateId is provided, we assume it's a template message
     if (job.templateId) {
-      // In a real scenario, we might want to fetch the template details to get the name
-      // For now, we'll use the job.meta?.templateName if provided, otherwise fallback to templateId
       const templateName = (job.meta?.templateName as string) || job.templateId;
       const languageCode = (job.meta?.languageCode as string) || 'en';
-
       const parameters = this.extractParameters(job);
 
       return {
@@ -90,7 +103,6 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
       };
     }
 
-    // Fallback to text message if no templateId
     return {
       to,
       type: 'text',
@@ -104,9 +116,6 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
     if (Array.isArray(job.data?.parameters)) {
       return job.data.parameters;
     }
-
-    // If data is just a flat object, we could try to extract numbered parameters or use all values
-    // For now, let's just return an empty array or handle specific keys if necessary
     const values = Object.values(job.data || {});
     return values.length > 0 ? values : [];
   }

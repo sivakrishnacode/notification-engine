@@ -1,8 +1,12 @@
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 
+export const RequestServerEnum = z.enum(['GAMERZ_BANK', 'SPACE_SOLAR']);
+export type RequestServer = z.infer<typeof RequestServerEnum>;
+
 export const NotificationJobSchema = z.object({
   jobId: z.string().default(() => randomUUID()),
+  Request_server: RequestServerEnum.default('GAMERZ_BANK'),
   provider: z.enum(['email', 'sms', 'push', 'whatsapp', 'in_app']),
   userId: z.string().min(1),
   receptions: z

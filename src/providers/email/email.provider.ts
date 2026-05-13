@@ -10,24 +10,35 @@ import {
 import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
-import { AppConfig } from '../../config/configuration';
+import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
 export class EmailProvider implements ProviderStrategy {
   private readonly logger = new Logger(EmailProvider.name);
-  private readonly sesClient: SESClient;
-  private readonly fromAddress: string;
+  private readonly sesConfigs = new Map<string, { client: SESClient; fromAddress: string }>();
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {
-    const aws = this.configService.get('aws', { infer: true });
-    this.sesClient = new SESClient({
-      region: aws.region,
+    const servers = this.configService.get('servers', { infer: true });
+
+    this.initializeSesClient('GAMERZ_BANK', servers.GAMERZ_BANK.aws);
+    this.initializeSesClient('SPACE_SOLAR', servers.SPACE_SOLAR.aws);
+  }
+
+  private initializeSesClient(name: string, config: ServerConfig['aws']) {
+    if (!config.accessKeyId || !config.secretAccessKey) {
+      this.logger.warn(`AWS SES config for ${name} is incomplete. Skipping.`);
+      return;
+    }
+
+    const client = new SESClient({
+      region: config.region,
       credentials: {
-        accessKeyId: aws.accessKeyId,
-        secretAccessKey: aws.secretAccessKey,
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
       },
     });
-    this.fromAddress = aws.sesFromAddress;
+    this.sesConfigs.set(name, { client, fromAddress: config.sesFromAddress });
+    this.logger.log(`SES client for ${name} initialized successfully`);
   }
 
   async send(
@@ -41,8 +52,15 @@ export class EmailProvider implements ProviderStrategy {
       );
     }
 
+    const server = job.Request_server ?? 'GAMERZ_BANK';
+    const sesConfig = this.sesConfigs.get(server);
+
+    if (!sesConfig) {
+      throw new Error(`SES client for server ${server} not initialized`);
+    }
+
     const input: SendEmailCommandInput = {
-      Source: this.fromAddress,
+      Source: sesConfig.fromAddress,
       Destination: {
         ToAddresses: [toAddress],
       },
@@ -69,10 +87,10 @@ export class EmailProvider implements ProviderStrategy {
     };
 
     const command = new SendEmailCommand(input);
-    const response = await this.sesClient.send(command);
+    const response = await sesConfig.client.send(command);
 
     const messageId = response.MessageId ?? 'unknown';
-    this.logger.log(`Email sent via SES: job=${job.jobId}, to=${toAddress}, id=${messageId}`);
+    this.logger.log(`Email sent via SES (${server}): job=${job.jobId}, to=${toAddress}, id=${messageId}`);
 
     return { providerRef: messageId };
   }

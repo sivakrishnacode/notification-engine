@@ -9,22 +9,35 @@ import {
 import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
-import { AppConfig } from '../../config/configuration';
+import { AppConfig, ServerConfig } from '../../config/configuration';
 
 @Injectable()
 export class SmsProvider implements ProviderStrategy {
   private readonly logger = new Logger(SmsProvider.name);
-  private readonly snsClient: SNSClient;
+  private readonly snsClients = new Map<string, SNSClient>();
 
   constructor(private readonly configService: ConfigService<AppConfig, true>) {
-    const aws = this.configService.get('aws', { infer: true });
-    this.snsClient = new SNSClient({
-      region: aws.region,
+    const servers = this.configService.get('servers', { infer: true });
+
+    this.initializeSnsClient('GAMERZ_BANK', servers.GAMERZ_BANK.aws);
+    this.initializeSnsClient('SPACE_SOLAR', servers.SPACE_SOLAR.aws);
+  }
+
+  private initializeSnsClient(name: string, config: ServerConfig['aws']) {
+    if (!config.accessKeyId || !config.secretAccessKey) {
+      this.logger.warn(`AWS SNS config for ${name} is incomplete. Skipping.`);
+      return;
+    }
+
+    const client = new SNSClient({
+      region: config.region,
       credentials: {
-        accessKeyId: aws.accessKeyId,
-        secretAccessKey: aws.secretAccessKey,
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
       },
     });
+    this.snsClients.set(name, client);
+    this.logger.log(`SNS client for ${name} initialized successfully`);
   }
 
   async send(
@@ -38,15 +51,22 @@ export class SmsProvider implements ProviderStrategy {
       );
     }
 
+    const server = job.Request_server ?? 'GAMERZ_BANK';
+    const snsClient = this.snsClients.get(server);
+
+    if (!snsClient) {
+      throw new Error(`SNS client for server ${server} not initialized`);
+    }
+
     const command = new PublishCommand({
       PhoneNumber: phoneNumber,
       Message: rendered.body,
     });
 
-    const response = await this.snsClient.send(command);
+    const response = await snsClient.send(command);
     const messageId = response.MessageId ?? 'unknown';
 
-    this.logger.log(`SMS sent via SNS: job=${job.jobId}, phone=${phoneNumber}, id=${messageId}`);
+    this.logger.log(`SMS sent via SNS (${server}): job=${job.jobId}, phone=${phoneNumber}, id=${messageId}`);
 
     return { providerRef: messageId };
   }

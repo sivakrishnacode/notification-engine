@@ -1,27 +1,47 @@
 // src/providers/push/push.provider.ts
 
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ProviderStrategy, SendResult } from '../../dispatcher/provider.strategy';
 import { NotificationJob } from '../../common/dto/notification-job.dto';
 import { RenderedTemplate } from '../../templates/templates.service';
 import * as admin from 'firebase-admin';
 import { Message } from 'firebase-admin/lib/messaging/messaging-api';
+import { AppConfig } from '../../config/configuration';
 
 @Injectable()
 export class PushProvider implements ProviderStrategy {
   private readonly logger = new Logger(PushProvider.name);
 
-  constructor() {
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          // Replace literal '\n' characters with actual line breaks
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-      });
-      this.logger.log('Firebase Admin SDK initialized successfully');
+  constructor(private readonly configService: ConfigService<AppConfig, true>) {
+    const servers = this.configService.get('servers', { infer: true });
+
+    this.initializeFirebaseApp('GAMERZ_BANK', servers.GAMERZ_BANK.firebase);
+    this.initializeFirebaseApp('SPACE_SOLAR', servers.SPACE_SOLAR.firebase);
+  }
+
+  private initializeFirebaseApp(name: string, config: any) {
+    if (!config.projectId || !config.privateKey || !config.clientEmail) {
+      this.logger.warn(`Firebase config for ${name} is incomplete. Skipping initialization.`);
+      return;
+    }
+
+    if (!admin.apps.find((app) => app?.name === name)) {
+      try {
+        admin.initializeApp(
+          {
+            credential: admin.credential.cert({
+              projectId: config.projectId,
+              clientEmail: config.clientEmail,
+              privateKey: config.privateKey.replace(/\\n/g, '\n'),
+            }),
+          },
+          name,
+        );
+        this.logger.log(`Firebase Admin SDK for ${name} initialized successfully`);
+      } catch (error) {
+        this.logger.error(`Failed to initialize Firebase Admin SDK for ${name}: ${(error as Error).message}`);
+      }
     }
   }
 
@@ -37,21 +57,25 @@ export class PushProvider implements ProviderStrategy {
     }
 
     try {
+      const server = job.Request_server ?? 'GAMERZ_BANK';
+      const app = admin.apps.find((a) => a?.name === server);
+
+      if (!app) {
+        throw new Error(`Firebase app for server ${server} not initialized`);
+      }
+
       const message: Message = {
         notification: {
           title: rendered.subject ?? 'Notification',
           body: rendered.body,
-          // image : ''
           imageUrl: 'https://file-examples.com/storage/fe1596838569f9c5b943e40/2017/10/file_example_JPG_100kB.jpg'
         },
         token: deviceToken,
       };
 
-      console.log("---------------------", message)
+      const response = await admin.messaging(app).send(message);
 
-      const response = await admin.messaging().send(message);
-
-      this.logger.log(`Push notification sent: job=${job.jobId}, to=${deviceToken}, id=${response}`);
+      this.logger.log(`Push notification sent (${server}): job=${job.jobId}, to=${deviceToken}, id=${response}`);
 
       return { providerRef: response };
     } catch (error) {

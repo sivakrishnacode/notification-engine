@@ -1,14 +1,10 @@
 // src/config/configuration.ts
 
-export interface AppConfig {
-  nodeEnv: string;
-  port: number;
-  redis: {
-    url: string;
-    tls: boolean;
-  };
-  database: {
-    url: string;
+export interface ServerConfig {
+  firebase: {
+    projectId: string;
+    privateKey: string;
+    clientEmail: string;
   };
   aws: {
     region: string;
@@ -22,6 +18,18 @@ export interface AppConfig {
   };
   conceps: {
     token: string;
+  };
+}
+
+export interface AppConfig {
+  nodeEnv: string;
+  port: number;
+  redis: {
+    url: string;
+    tls: boolean;
+  };
+  database: {
+    url: string;
   };
   whatsappProvider: 'meta' | 'conceps';
   worker: {
@@ -38,7 +46,32 @@ export interface AppConfig {
     jwtSecret: string;
     jwtExpiration: string;
   };
+  servers: {
+    GAMERZ_BANK: ServerConfig;
+    SPACE_SOLAR: ServerConfig;
+  };
 }
+
+const getServerConfig = (prefix: string): ServerConfig => ({
+  firebase: {
+    projectId: process.env[`${prefix}_FIREBASE_PROJECT_ID`] ?? process.env['FIREBASE_PROJECT_ID'] ?? '',
+    privateKey: process.env[`${prefix}_FIREBASE_PRIVATE_KEY`] ?? process.env['FIREBASE_PRIVATE_KEY'] ?? '',
+    clientEmail: process.env[`${prefix}_FIREBASE_CLIENT_EMAIL`] ?? process.env['FIREBASE_CLIENT_EMAIL'] ?? '',
+  },
+  aws: {
+    region: process.env[`${prefix}_AWS_REGION`] ?? process.env['AWS_REGION'] ?? '',
+    accessKeyId: process.env[`${prefix}_AWS_ACCESS_KEY_ID`] ?? process.env['AWS_ACCESS_KEY_ID'] ?? '',
+    secretAccessKey: process.env[`${prefix}_AWS_SECRET_ACCESS_KEY`] ?? process.env['AWS_SECRET_ACCESS_KEY'] ?? '',
+    sesFromAddress: process.env[`${prefix}_SES_FROM_ADDRESS`] ?? process.env['SES_FROM_ADDRESS'] ?? '',
+  },
+  meta: {
+    phoneNumberId: process.env[`${prefix}_META_PHONE_NUMBER_ID`] ?? process.env['META_PHONE_NUMBER_ID'] ?? '',
+    accessToken: process.env[`${prefix}_META_ACCESS_TOKEN`] ?? process.env['META_ACCESS_TOKEN'] ?? '',
+  },
+  conceps: {
+    token: process.env[`${prefix}_CONCEPS_TOKEN`] ?? process.env['CONCEPS_TOKEN'] ?? '',
+  },
+});
 
 export default (): AppConfig => ({
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
@@ -49,19 +82,6 @@ export default (): AppConfig => ({
   },
   database: {
     url: process.env['DATABASE_URL'] ?? '',
-  },
-  aws: {
-    region: process.env['AWS_REGION'] ?? '',
-    accessKeyId: process.env['AWS_ACCESS_KEY_ID'] ?? '',
-    secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY'] ?? '',
-    sesFromAddress: process.env['SES_FROM_ADDRESS'] ?? '',
-  },
-  meta: {
-    phoneNumberId: process.env['META_PHONE_NUMBER_ID'] ?? '',
-    accessToken: process.env['META_ACCESS_TOKEN'] ?? '',
-  },
-  conceps: {
-    token: process.env['CONCEPS_TOKEN'] ?? '',
   },
   whatsappProvider: (process.env['WHATSAPP_PROVIDER'] as any) ?? 'meta',
   worker: {
@@ -77,5 +97,9 @@ export default (): AppConfig => ({
   auth: {
     jwtSecret: process.env['JWT_SECRET'] ?? '',
     jwtExpiration: process.env['JWT_EXPIRATION'] ?? '3600s',
+  },
+  servers: {
+    GAMERZ_BANK: getServerConfig('GAMERZ_BANK'),
+    SPACE_SOLAR: getServerConfig('SPACE_SOLAR'),
   },
 });
