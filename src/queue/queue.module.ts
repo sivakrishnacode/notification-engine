@@ -7,7 +7,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QueueService } from './queue.service';
 import { NotificationProcessor } from './notification.processor';
 import { RateLimitModule } from '../rate-limit/rate-limit.module';
-import { TemplatesModule } from '../templates/templates.module';
 import { DispatcherModule } from '../dispatcher/dispatcher.module';
 import { DeliveryLogModule } from '../delivery-log/delivery-log.module';
 import { AppConfig } from '../config/configuration';
@@ -61,11 +60,10 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
       },
     ),
     RateLimitModule,
-    TemplatesModule,
     DispatcherModule,
     DeliveryLogModule,
   ],
   providers: [QueueService, NotificationProcessor],
   exports: [QueueService],
 })
-export class QueueModule {}
+export class QueueModule { }
