@@ -77,8 +77,8 @@ export class ConcepsWhatsappProvider implements ProviderStrategy {
 
   private buildPayload(job: NotificationJob, rendered: RenderedTemplate, to: string) {
     if (job.templateId) {
-      const templateName = (job.meta?.templateName as string) || job.templateId;
-      const languageCode = (job.meta?.languageCode as string) || 'en';
+      const templateName = job.templateId;
+      const languageCode = 'en';
       const parameters = this.extractParameters(job);
 
       return {
