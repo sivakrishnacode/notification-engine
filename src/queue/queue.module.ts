@@ -22,7 +22,6 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
         const redisConfig = configService.get('redis', { infer: true });
         const connection = new Redis(redisConfig.url, {
           maxRetriesPerRequest: null,
-          // ...(redisConfig.tls ? { tls: {} } : {}),
         });
         return { connection };
       },
