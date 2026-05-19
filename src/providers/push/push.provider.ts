@@ -67,7 +67,7 @@ export class PushProvider implements ProviderStrategy {
         notification: {
           title: content.subject ?? 'Notification',
           body: content.body,
-          imageUrl: 'https://file-examples.com/storage/fe1596838569f9c5b943e40/2017/10/file_example_JPG_100kB.jpg'
+          imageUrl: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg'
         },
         token: deviceToken,
       };
